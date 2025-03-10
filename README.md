@@ -34,6 +34,7 @@ First, clone this repository to your local machine:
 ```bash
 git clone https://github.com/Sraddha-Agrawal/L2S.git
 cd L2S
+```
 
 ### 2. Create and Activate a Virtual Environment (Recommended) 
 
@@ -43,11 +44,13 @@ It is recommended to create a virtual environment to manage dependencies and avo
 ```bash
 python3 -m venv l2s_env
 source l2s_env/bin/activate
+```
 
 ### On Windows (Command Prompt):
 ```bash
 python -m venv l2s_env
 l2s_env\Scripts\activate
+```
 
 ### 3. Install Dependencies
 
@@ -55,8 +58,9 @@ Once the virtual environment is activated, install the required dependencies:
 
 ```bash
 pip install torch torchvision numpy scipy matplotlib ase pathlib itertools copy random time pickle
+```
 
-## 4. Verify Installation
+### 4. Verify Installation
 
 To confirm that all necessary libraries are correctly installed, run the following command:
 
@@ -69,27 +73,31 @@ import matplotlib
 import ase
 print('All dependencies are installed successfully!')
 "
+```
 If no errors appear and you see the success message, the installation was successful.
 
-## 5. Open Jupyter Notebook
+### 5. Open Jupyter Notebook
 
 Launch Jupyter Notebook to run the optimization scripts:
 
 ```bash
 jupyter notebook
+```
 
-## 6. Run the Desired Notebook
+### 6. Run the Desired Notebook
 
 Open and execute the appropriate notebook based on the desired illumination protocol:
 
 ### For Continuous Wave Optimization:
 ```bash
 jupyter notebook L2S_continuous_wave_example.ipynb
+```
 ### For Pulsed Signal Optimization:
 ```bash
 jupyter notebook L2S_pulsed_example.ipynb
+```
 
-## 7. Modify Input Data (Optional)
+### 7. Modify Input Data (Optional)
 
 The `Input_files/` directory contains essential **potential energy** and **polarizability** data derived from first-principles calculations.
 
@@ -98,11 +106,12 @@ If you wish to modify the input data, follow these steps:
 ### Replace the default input files with custom data:
 ```bash
 cp path/to/custom_data.dat Input_files/
+```
 
 Confirm that the new files are in place:
 ```bash
 ls Input_files/
-
+```
 
 ## Citation  
 

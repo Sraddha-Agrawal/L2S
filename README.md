@@ -22,19 +22,13 @@ L2S (Learning to Shine) is an optimization framework designed to identify optima
   - This directory holds the input datasets (located in the `Data` subfolder) and Jupyter Notebook scripts used to generate the four key figures presented in the manuscript.  
   - The scripts allow users to reproduce the plots and analyze the results presented in the study.  
 
-## Required Libraries  
-To run the notebooks and reproduce the results, install the following dependencies:  
-
-```bash
-pip install torch torchvision numpy scipy matplotlib ase pathlib itertools copy random time pickle
-
-## Citation  
+**## Citation**  
 
 The manuscript detailing this work is currently in preparation. A citation link will be provided here once it is published.  
 
 If you use this repository in your research, please acknowledge it by citing the upcoming publication.  
 
-## Contact  
+**## Contact  **
 
 For any questions, feedback, or contributions, please reach out via:  
 

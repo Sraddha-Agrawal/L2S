@@ -29,6 +29,7 @@ L2S (Learning to Shine) is an optimization framework designed to identify optima
 Follow the steps below to install dependencies and run the provided notebooks:
 
 ### 1. Clone the Repository  
+
 First, clone this repository to your local machine:  
 ```bash
 git clone https://github.com/Sraddha-Agrawal/L2S.git

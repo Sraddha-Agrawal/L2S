@@ -1,0 +1,18 @@
+{
+  "project_root": "/sandbox/sagrawal/L2S/cont-langevin",
+  "input_dir": "/sandbox/sagrawal/L2S/cont-langevin/Input_files",
+  "pbs_script": "/sandbox/sagrawal/L2S/cont-langevin/python-sub-langevin",
+  "fitness_method": "hybrid_cdf_lp",
+  "fitness_q": 0.2,
+  "fitness_lam": 0.5,
+  "fitness_p": 4.0,
+  "fitness_tau": 0.05,
+  "fitness_hybrid_w": 0.5,
+  "fitness_threshold": 0.6,
+  "fitness_grid_n": 401,
+  "fitness_nan_policy": "omit",
+  "bi_mass": 208.9804,
+  "energy_in_ev": 0.004180159285619251,
+  "freq_in_thz": 6.3507799295888985,
+  "t_in_ps": 0.15746097504353807
+}

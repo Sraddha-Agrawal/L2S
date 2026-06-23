@@ -1,0 +1,288 @@
+#!/bin/bash
+#PBS -N ga_bi_chunked
+#PBS -j oe
+#PBS -l nodes=1:ppn=1:avx512
+#PBS -l walltime=00:30:00
+#PBS -A staff
+#PBS -o ga_test_50K-gen-seed.out
+#PBS -e ga_test_50K-gen-seed.err
+#PBS -m a
+
+set -euo pipefail
+
+cd "$PBS_O_WORKDIR"
+
+# ============================================================
+# USER SETTINGS
+# ============================================================
+
+# manual submission:
+#   qsub python-sub-langevin
+#
+# MODE defaults to bootstrap for manual submission.
+# child jobs submitted by Python pass MODE=chunk / MODE=reduce.
+MODE="${MODE:-restart}"
+
+OUTDIR="${OUTDIR:-ga_out_50K_1000ic_100pop_hybrid_cdf_lp}"
+INPUT_DIR="${INPUT_DIR:-$PBS_O_WORKDIR/Input_files}"
+IC_FILE="${IC_FILE:-$PBS_O_WORKDIR/Input_files/ic_pairs_5000.txt}"
+
+# ---- test settings ----
+N_POP="${N_POP:-100}"
+N_IC_USE="${N_IC_USE:-5000}"
+N_IC_PER_GEN="${N_IC_PER_GEN:-1000}"
+
+# 20 pop together, 1 IC per chunk => 100 chunk jobs/gen for this test
+N_NET_CHUNKS="${N_NET_CHUNKS:-1}"
+N_IC_CHUNKS="${N_IC_CHUNKS:-500}"
+
+# log chunk progress every N population networks
+PROGRESS_EVERY="${PROGRESS_EVERY:-100}"
+
+STOP_MODE="${STOP_MODE:-threshold}"
+N_GEN="${N_GEN:-3}"
+STOP_THRESHOLD="${STOP_THRESHOLD:-0.995}"
+MAX_GEN="${MAX_GEN:-120}"
+
+SEED="${SEED:-123}"
+IC_SEED="${IC_SEED:-456}"
+LANGEVIN_SEED="${LANGEVIN_SEED:-789}"
+
+IC_MODE="${IC_MODE:-absolute}"
+FIELD_MODE="${FIELD_MODE:-spline}"
+SPLINE_K="${SPLINE_K:-5}"
+SPLINE_N="${SPLINE_N:-400}"
+
+TOTAL_TIME_PS="${TOTAL_TIME_PS:-20.0}"
+DENSE_STEPS="${DENSE_STEPS:-25000}"
+
+INTEGRATOR="${INTEGRATOR:-baoab}"   # deterministic | baoab
+METHOD="${METHOD:-Radau}"
+RTOL="${RTOL:-1e-3}"
+ATOL="${ATOL:-1e-6}"
+ALPHA="${ALPHA:-8.75}"
+DAMPING="${DAMPING:-0.05}"
+GAMMA="${GAMMA:-0.05}"
+
+USE_LANGEVIN="${USE_LANGEVIN:-1}"   # 1=yes, 0=no
+TEMPERATURE_K="${TEMPERATURE_K:-50.0}"
+
+# ============================================================
+# FITNESS SETTINGS
+#
+# Supported methods:
+#   mean
+#   min
+#   mean_std
+#   cvar
+#   cdf_l2
+#   survival_thr
+#   lp_to_one
+#   soft_threshold
+#   hybrid_cdf_lp
+#
+# Recommended examples:
+#   FITNESS_METHOD="cdf_l2"
+#   FITNESS_METHOD="lp_to_one"        FITNESS_P="4.0"
+#   FITNESS_METHOD="soft_threshold"   FITNESS_THRESHOLD="0.8" FITNESS_TAU="0.05"
+#   FITNESS_METHOD="hybrid_cdf_lp"    FITNESS_P="4.0" FITNESS_HYBRID_W="0.5"
+# ============================================================
+FITNESS_METHOD="${FITNESS_METHOD:-hybrid_cdf_lp}"
+FITNESS_Q="${FITNESS_Q:-0.2}"
+FITNESS_LAM="${FITNESS_LAM:-0.5}"
+
+FITNESS_THRESHOLD="${FITNESS_THRESHOLD:-0.6}"
+FITNESS_GRID_N="${FITNESS_GRID_N:-401}"
+FITNESS_NAN_POLICY="${FITNESS_NAN_POLICY:-omit}"
+
+FITNESS_P="${FITNESS_P:-4.0}"
+FITNESS_TAU="${FITNESS_TAU:-0.05}"
+FITNESS_HYBRID_W="${FITNESS_HYBRID_W:-0.5}"
+
+KEEP_CHUNK_FILES="${KEEP_CHUNK_FILES:-0}"
+
+# ---- scheduler-provided vars for child jobs ----
+GEN="${GEN:-0}"
+NET_CHUNK_ID="${NET_CHUNK_ID:-0}"
+IC_CHUNK_ID="${IC_CHUNK_ID:-0}"
+
+# ---- restart settings ----
+# RESTART_GEN is the generation number you want to restart FROM
+# Example:
+#   if gen_0031 already exists and you just want to resubmit it:
+#       RESTART_GEN=31
+#       RESTART_MODE=resubmit_existing
+#
+#   if gen_0031 does not exist and you want to recreate it from completed gen_0030:
+#       RESTART_GEN=31
+#       RESTART_MODE=recreate_next
+RESTART_GEN="${RESTART_GEN:-67}"
+RESTART_MODE="${RESTART_MODE:-resubmit_existing}"
+
+# ============================================================
+# ENVIRONMENT
+# ============================================================
+
+echo "============================================================"
+echo "MODE              = ${MODE}"
+echo "GEN               = ${GEN}"
+echo "NET_CHUNK_ID      = ${NET_CHUNK_ID}"
+echo "IC_CHUNK_ID       = ${IC_CHUNK_ID}"
+echo "HOSTNAME          = $(hostname)"
+echo "DATE              = $(date)"
+echo "PBS_JOBID         = ${PBS_JOBID:-none}"
+echo "PBS_O_WORKDIR     = ${PBS_O_WORKDIR:-none}"
+echo "OUTDIR            = ${OUTDIR}"
+echo "FITNESS_METHOD    = ${FITNESS_METHOD}"
+echo "FITNESS_Q         = ${FITNESS_Q}"
+echo "FITNESS_LAM       = ${FITNESS_LAM}"
+echo "FITNESS_THRESHOLD = ${FITNESS_THRESHOLD}"
+echo "FITNESS_GRID_N    = ${FITNESS_GRID_N}"
+#echo "FITNESS_NAN_POLICY= ${FITNESS_NAN_POLICY}"
+echo "FITNESS_P         = ${FITNESS_P}"
+echo "FITNESS_TAU       = ${FITNESS_TAU}"
+echo "FITNESS_HYBRID_W  = ${FITNESS_HYBRID_W}"
+echo "RESTART_GEN       = ${RESTART_GEN}"
+echo "RESTART_MODE      = ${RESTART_MODE}"
+echo "============================================================"
+
+# Keep this similar to your old working script
+CONDA_BASE="$HOME/miniconda3"
+set +u
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+conda activate ga_env
+set -u
+
+echo "Using python: $(which python)"
+python -V
+
+python - <<'PYEOF'
+import sys
+print("Python executable:", sys.executable)
+import numpy
+print("NumPy OK:", numpy.__version__)
+PYEOF
+
+# avoid oversubscription
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+export VECLIB_MAXIMUM_THREADS=1
+export BLIS_NUM_THREADS=1
+export PYTHONUNBUFFERED=1
+
+# ============================================================
+# DISPATCH
+# ============================================================
+
+if [[ "${MODE}" == "bootstrap" ]]; then
+    echo "[BOOTSTRAP] launching run_ga.py"
+
+    CMD=(
+        python run_ga.py
+        --outdir "${OUTDIR}"
+        --input_dir "${INPUT_DIR}"
+        --ic_file "${IC_FILE}"
+        --n_ic_use "${N_IC_USE}"
+        --ic_mode "${IC_MODE}"
+        --n_ic_per_gen "${N_IC_PER_GEN}"
+        --n_net_chunks "${N_NET_CHUNKS}"
+        --n_ic_chunks "${N_IC_CHUNKS}"
+        --stop_mode "${STOP_MODE}"
+        --n_gen "${N_GEN}"
+        --stop_threshold "${STOP_THRESHOLD}"
+        --max_gen "${MAX_GEN}"
+        --n_pop "${N_POP}"
+        --seed "${SEED}"
+        --mutation_strength "0.2"
+        --field_mode "${FIELD_MODE}"
+        --spline_k "${SPLINE_K}"
+        --spline_n "${SPLINE_N}"
+        --total_time_ps "${TOTAL_TIME_PS}"
+        --dense_steps "${DENSE_STEPS}"
+        --integrator "${INTEGRATOR}"
+        --method "${METHOD}"
+        --rtol "${RTOL}"
+        --atol "${ATOL}"
+        --alpha "${ALPHA}"
+        --damping "${DAMPING}"
+        --gamma "${GAMMA}"
+        --temperature_K "${TEMPERATURE_K}"
+        --langevin_seed "${LANGEVIN_SEED}"
+
+        # fitness
+        --fitness_method "${FITNESS_METHOD}"
+        --fitness_q "${FITNESS_Q}"
+        --fitness_lam "${FITNESS_LAM}"
+        --fitness_threshold "${FITNESS_THRESHOLD}"
+        --fitness_grid_n "${FITNESS_GRID_N}"
+        --fitness_nan_policy "${FITNESS_NAN_POLICY}"
+        --fitness_p "${FITNESS_P}"
+        --fitness_tau "${FITNESS_TAU}"
+        --fitness_hybrid_w "${FITNESS_HYBRID_W}"
+
+        --pbs_script "${PBS_O_WORKDIR}/python-sub-langevin"
+        --ic_seed "${IC_SEED}"
+    )
+
+    if [[ "${USE_LANGEVIN}" == "1" ]]; then
+        CMD+=( --use_langevin )
+    fi
+
+    if [[ "${KEEP_CHUNK_FILES}" == "1" ]]; then
+        CMD+=( --keep_chunk_files )
+    fi
+
+    printf ' %q' "${CMD[@]}"
+    echo
+    "${CMD[@]}"
+
+elif [[ "${MODE}" == "chunk" ]]; then
+    echo "[CHUNK] launching src/eval_chunk.py"
+
+    CMD=(
+        python src/eval_chunk.py
+        --outdir "${OUTDIR}"
+        --gen "${GEN}"
+        --net_chunk_id "${NET_CHUNK_ID}"
+        --ic_chunk_id "${IC_CHUNK_ID}"
+        --progress_every "${PROGRESS_EVERY}"
+    )
+
+    printf ' %q' "${CMD[@]}"
+    echo
+    "${CMD[@]}"
+
+elif [[ "${MODE}" == "reduce" ]]; then
+    echo "[REDUCE] launching src/reduce_gen.py"
+
+    CMD=(
+        python src/reduce_gen.py
+        --outdir "${OUTDIR}"
+        --gen "${GEN}"
+    )
+
+    printf ' %q' "${CMD[@]}"
+    echo
+    "${CMD[@]}"
+
+elif [[ "${MODE}" == "restart" ]]; then
+    echo "[RESTART] launching src/restart_from_gen.py"
+
+    CMD=(
+        python src/restart_from_gen.py
+        --outdir "${OUTDIR}"
+        --gen "${RESTART_GEN}"
+        --mode "${RESTART_MODE}"
+    )
+
+    printf ' %q' "${CMD[@]}"
+    echo
+    "${CMD[@]}"
+else
+    echo "ERROR: unknown MODE=${MODE}"
+    exit 1
+fi
+
+echo "DONE MODE=${MODE} $(date)"

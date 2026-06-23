@@ -21,7 +21,7 @@ L2S (Learning to Shine) is an optimization framework designed to identify optima
   - Used in both `L2S_continuous_wave_example.ipynb` and `L2S_pulsed_example.ipynb`.  
 
 - **`Final_figs_plots/Final_figs/`**  
-  - This directory holds the input datasets (located in the `Data` subfolder) and Jupyter Notebook scripts used to generate the four key figures presented in the manuscript.  
+  - This directory holds the input datasets (located in the `Data` subfolder) and Jupyter Notebook scripts used to generate the main figures presented in the manuscript.  
   - The scripts allow users to reproduce the plots and analyze the results presented in the study.
  
 ## How to Use  

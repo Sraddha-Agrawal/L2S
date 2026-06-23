@@ -13,7 +13,19 @@ L2S (Learning to Shine) is an optimization framework designed to identify optima
 - **`L2S_pulsed_example.ipynb`**  
   - Illustrates the optimization framework when using **pulsed signal protocols** for phase transition control.  
   - Similar to the continuous wave example, this notebook walks through an example run.  
-  - Uses data from `Input_files` for potential energy and polarizability in the equation of motion.  
+  - Uses data from `Input_files` for potential energy and polarizability in the equation of motion.
+ 
+- ** `Langevin_dynamics/`
+
+Contains the Langevin dynamics workflow, including source modules in `src/`, the genetic-algorithm driver `run_ga.py`, and job-submission/helper scripts in `python-sub-langevin/`.
+
+- ** `Displacive_excitation/`
+
+Contains the notebook workflow for displacive pulsed excitation simulations.
+
+- ** `3D_PES/`
+
+Contains the notebook workflow for continuous-wave dynamics on a three-dimensional potential energy surface. The local helper module `bi_pes3d_dft.py` is included for constructing the 3D Bi potential energy surface used by the notebook.
 
 - **`Input_files/`**  
   - Contains essential **potential energy** and **polarizability** data, derived from first-principles calculations.  

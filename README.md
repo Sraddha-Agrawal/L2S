@@ -4,7 +4,7 @@
 
 **L2S (Learning to Shine)** is an optimization framework designed to identify optimal illumination protocols for controlling optical phase transitions in materials with broken symmetry. By leveraging a neuroevolutionary approach, L2S optimizes the temporal structure of optical fields to achieve desired optomechanical responses.
 
-This repository provides example workflows using continuous-wave and pulsed illumination strategies, along with extended workflows for Langevin dynamics, displacive excitation, and three-dimensional potential energy surface simulations.
+This repository provides example workflows using continuous-wave and pulsed illumination strategies, along with workflows for Langevin dynamics, displacive excitation, and three-dimensional potential energy surface simulations.
 
 ## Repository Structure
 
@@ -68,7 +68,7 @@ The folder is organized as:
 | `Fig2/`      | Figure 2          |
 | `Fig3/`      | Figure 3          |
 
-Large raw/generated files were excluded from this GitHub version to keep the repository lightweight. The included files are intended to document the figure-generation workflow and provide the lightweight data needed for reproducing the manuscript plots.
+The input data required for reproducing the manuscript plotting workflows are included, with one exception: a `*.pkl` file used for plotting displacive excitation dynamics results is not included because its size exceeds 10 GB.
 
 ## How to Use
 
@@ -250,13 +250,15 @@ Langevin_dynamics/Input_files/
 
 ## Notes on Large Files
 
-Large raw and generated files are not included in this GitHub version to keep the repository suitable for manuscript sharing. The repository includes the plotting notebooks, source scripts, input files, and processed data needed to document and reproduce the main analysis workflows.
+All input data required by the included workflows are available in this repository, except for a `*.pkl` file used for plotting displacive excitation dynamics results. That file is not included because it is larger than 10 GB.
+
+The omitted `*.pkl` file is a large plotting data file and is not required for running the main optimization examples. It is only needed for reproducing the corresponding cached displacive excitation dynamics plot directly from the saved object.
 
 ## Citation
 
 An earlier version of this work is available on arXiv:
 
-[https://arxiv.org/pdf/2511.03895](https://arxiv.org/pdf/2511.03895)
+https://arxiv.org/pdf/2511.03895
 
 The manuscript is currently being updated. A final citation will be provided here once the updated version is available.
 
